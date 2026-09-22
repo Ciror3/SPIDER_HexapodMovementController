@@ -37,7 +37,6 @@ class DwaSpec:
 @dataclass
 class EpisodeResult:
     success: bool
-    collision: bool
     steps: int
     episode_return: float
     wall_time_sec: float
@@ -54,7 +53,7 @@ def parse_args():
     parser.add_argument(
         "--env",
         choices=list(ENV_VARIANTS),
-        default="sin_obstaculos",
+        default="standard",
         help="entorno estándar para PPO/DWA",
     )
     parser.add_argument(
@@ -448,7 +447,6 @@ def evaluate_policy(
         env = make_env(env_cls, env_kwargs, args.max_steps)
         obs, _ = reset_eval_env(env, target, args.seed + episode)
         done = False
-        info = {}
         episode_return = 0.0
         decision_times = []
         start_time = time.perf_counter()
@@ -462,7 +460,7 @@ def evaluate_policy(
                 break
 
             for action in actions:
-                obs, reward, terminated, truncated, info = env.step(action)
+                obs, reward, terminated, truncated, _ = env.step(action)
                 episode_return += float(reward)
                 done = terminated or truncated
                 if done:
@@ -470,12 +468,10 @@ def evaluate_policy(
 
         wall_time = time.perf_counter() - start_time
         final_distance = float(np.linalg.norm(env.target_pos))
-        collision = bool(info.get("collision", False))
-        success = final_distance <= env.success_radius and not collision
+        success = final_distance <= env.success_radius
         results.append(
             EpisodeResult(
                 success=success,
-                collision=collision,
                 steps=int(env.step_count),
                 episode_return=episode_return,
                 wall_time_sec=wall_time,
@@ -517,7 +513,6 @@ def summarize(label, results, model_path, training_steps, extra_fields=None):
         "episodes": len(results),
         "successes": len(successes),
         "success_rate": len(successes) / n,
-        "collision_rate": sum(result.collision for result in results) / n,
         "avg_steps_to_goal": float(np.mean(steps_success)) if len(steps_success) else "",
         "std_steps_to_goal": float(np.std(steps_success)) if len(steps_success) else "",
         "avg_steps_all": float(np.mean(steps_all)) if len(steps_all) else "",

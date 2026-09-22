@@ -19,8 +19,8 @@ def parse_args():
     parser.add_argument(
         "--env",
         choices=list(ENV_VARIANTS),
-        default="sin_obstaculos",
-        help="elige el entorno: sin_obstaculos, obstaculos_sin_lidar o obstaculos_lidar",
+        default="standard",
+        help="entorno base de navegación",
     )
     parser.add_argument("--output", default="policy_map.png")
     parser.add_argument("--map-limit", type=float, default=4.0)

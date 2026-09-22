@@ -22,7 +22,6 @@ class EpisodeStats:
     episode: int
     target: np.ndarray
     success: bool
-    collision: bool
     steps: int
     episode_return: float
     final_distance: float
@@ -129,18 +128,17 @@ def run_ppo_episode(model, target, episode, args):
     done = False
     episode_return = 0.0
     actions = []
-    info = {}
     start_time = time.perf_counter()
 
     while not done:
         action, _ = model.predict(obs, deterministic=args.deterministic)
         action = int(action)
-        obs, reward, terminated, truncated, info = env.step(action)
+        obs, reward, terminated, truncated, _ = env.step(action)
         episode_return += float(reward)
         actions.append(action)
         done = terminated or truncated
 
-    stats = build_episode_stats("PPO", env, episode, target, episode_return, actions, info, start_time)
+    stats = build_episode_stats("PPO", env, episode, target, episode_return, actions, start_time)
     print_episode_result(stats)
     env.close()
     return stats
@@ -155,7 +153,6 @@ def run_dwa_episode(controller, target, episode, args):
     )
     env.render()
     done = False
-    info = {}
     episode_return = 0.0
     actions = []
     start_time = time.perf_counter()
@@ -169,29 +166,27 @@ def run_dwa_episode(controller, target, episode, args):
             break
 
         for action in planned_actions:
-            obs, reward, terminated, truncated, info = env.step(action)
+            obs, reward, terminated, truncated, _ = env.step(action)
             episode_return += float(reward)
             actions.append(int(action))
             done = terminated or truncated
             if done or args.dwa_replan_each_step:
                 break
 
-    stats = build_episode_stats("DWA", env, episode, target, episode_return, actions, info, start_time)
+    stats = build_episode_stats("DWA", env, episode, target, episode_return, actions, start_time)
     print_episode_result(stats)
     env.close()
     return stats
 
 
-def build_episode_stats(label, env, episode, target, episode_return, actions, info, start_time):
+def build_episode_stats(label, env, episode, target, episode_return, actions, start_time):
     distance = float(np.linalg.norm(env.target_pos))
-    collision = bool(info.get("collision", False))
-    success = distance <= env.success_radius and not collision
+    success = distance <= env.success_radius
     return EpisodeStats(
         label=label,
         episode=episode,
         target=np.asarray(target, dtype=np.float64).copy(),
         success=success,
-        collision=collision,
         steps=int(env.step_count),
         episode_return=float(episode_return),
         final_distance=distance,
@@ -215,20 +210,19 @@ def print_comparison(results):
 
     print("\nComparativa final")
     print(
-        "method episodes success_rate collision_rate avg_steps "
+        "method episodes success_rate avg_steps "
         "avg_return avg_final_dist avg_wall_time_sec"
     )
     for label in sorted({result.label for result in results}):
         rows = [result for result in results if result.label == label]
         n = len(rows)
         success_rate = sum(row.success for row in rows) / n
-        collision_rate = sum(row.collision for row in rows) / n
         avg_steps = float(np.mean([row.steps for row in rows]))
         avg_return = float(np.mean([row.episode_return for row in rows]))
         avg_final_dist = float(np.mean([row.final_distance for row in rows]))
         avg_wall_time = float(np.mean([row.wall_time_sec for row in rows]))
         print(
-            f"{label:>6} {n:8d} {success_rate:12.3f} {collision_rate:14.3f} "
+            f"{label:>6} {n:8d} {success_rate:12.3f} "
             f"{avg_steps:9.2f} {avg_return:10.3f} {avg_final_dist:14.3f} "
             f"{avg_wall_time:17.4f}"
         )

@@ -8,6 +8,9 @@ from spider_rl.environments.previous_action import SpiderEnv as PreviousStepsEnv
 
 
 class StandardEnvironmentTests(unittest.TestCase):
+    def test_only_standard_variant_is_public(self):
+        self.assertEqual(set(ENV_VARIANTS), {"standard"})
+
     def test_all_variants_follow_gymnasium_api(self):
         for name, env_cls in ENV_VARIANTS.items():
             with self.subTest(name=name):

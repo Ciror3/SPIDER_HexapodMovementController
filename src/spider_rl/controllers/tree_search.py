@@ -28,7 +28,6 @@ ACTION_NAMES = {
 @dataclass
 class PlanningState:
     target_pos: np.ndarray
-    obstacles: np.ndarray
     previous_motion: str | None = None
 
 
@@ -38,7 +37,6 @@ class PlanResult:
     score: float
     sequence: tuple[int, ...]
     predicted_target: np.ndarray
-    predicted_collision: bool
 
 
 class DiscreteTreeSearchController:
@@ -59,27 +57,27 @@ class DiscreteTreeSearchController:
         initial = self._read_state(env)
         initial_distance = self._distance(initial)
 
-        frontier = [(0.0, (), initial, False, initial_distance)]
+        frontier = [(0.0, (), initial, initial_distance)]
         finished = []
 
         for _ in range(self.horizon):
             expanded = []
             found_success_at_depth = False
 
-            for score, seq, state, collided, last_distance in frontier:
-                if self._is_terminal(env, state, collided):
-                    finished.append((score, seq, state, collided, last_distance))
-                    found_success_at_depth = found_success_at_depth or self._is_success(env, state, collided)
+            for score, seq, state, last_distance in frontier:
+                if self._is_terminal(env, state):
+                    finished.append((score, seq, state, last_distance))
+                    found_success_at_depth = found_success_at_depth or self._is_success(env, state)
                     continue
 
                 for action in actions:
-                    child = self._expand(env, score, seq, state, collided, last_distance, action)
-                    _, _, child_state, child_collided, _ = child
-                    if self._is_terminal(env, child_state, child_collided):
+                    child = self._expand(env, score, seq, state, last_distance, action)
+                    _, _, child_state, _ = child
+                    if self._is_terminal(env, child_state):
                         finished.append(child)
                         found_success_at_depth = (
                             found_success_at_depth
-                            or self._is_success(env, child_state, child_collided)
+                            or self._is_success(env, child_state)
                         )
                     else:
                         expanded.append(child)
@@ -97,32 +95,30 @@ class DiscreteTreeSearchController:
 
         candidates = finished + frontier
         successful = [
-            item for item in candidates if self._is_success(env, item[2], item[3])
+            item for item in candidates if self._is_success(env, item[2])
         ]
         selectable = successful if successful else candidates
         best = max(selectable, key=lambda item: self._terminal_score(env, *item))
         final_score = self._terminal_score(env, *best)
-        _, sequence, state, collided, _ = best
+        _, sequence, state, _ = best
         return PlanResult(
             action=sequence[0] if sequence else -1,
             score=final_score,
             sequence=sequence,
             predicted_target=state.target_pos.copy(),
-            predicted_collision=collided,
         )
 
-    def _expand(self, env, score, seq, state, collided, last_distance, action):
+    def _expand(self, env, score, seq, state, last_distance, action):
         next_state = self._simulate_action(env, state, action)
         dist = self._distance(next_state)
-        next_collided = False
-        reward = self._reward_like_env(env, state, next_state, False, 0.0)
+        reward = self._reward_like_env(env, state, next_state)
 
-        return score + reward, seq + (action,), next_state, next_collided, dist
+        return score + reward, seq + (action,), next_state, dist
 
-    def _terminal_score(self, env, score, seq, state, collided, last_distance):
+    def _terminal_score(self, env, score, seq, state, last_distance):
         return score
 
-    def _reward_like_env(self, env, state, next_state, collision, repulse):
+    def _reward_like_env(self, env, state, next_state):
         last_distance = self._distance(state)
         dist = self._distance(next_state)
         terminated = dist <= env.success_radius
@@ -144,32 +140,20 @@ class DiscreteTreeSearchController:
         if distance_delta < 0:
             reward -= env.backtrack_penalty
 
-        repulse_weight = float(getattr(env, "repulse_weight", 0.0))
-        if repulse_weight:
-            repulse_scale = 1.0
-            if dist <= (env.success_radius * 3.0):
-                repulse_scale = dist / (env.success_radius * 3.0)
-            reward -= repulse_weight * repulse * repulse_scale
-
-        if collision:
-            reward -= float(getattr(env, "collision_penalty", 0.0))
-
-        if terminated and not collision:
+        if terminated:
             reward += env.success_bonus
 
         return reward
 
-    def _is_terminal(self, env, state, collided):
-        return self._is_success(env, state, collided)
+    def _is_terminal(self, env, state):
+        return self._is_success(env, state)
 
-    def _is_success(self, env, state, collided):
+    def _is_success(self, env, state):
         return self._distance(state) <= env.success_radius
 
     def _read_state(self, env):
-        obstacles = getattr(env, "obstacles", np.zeros((0, 3), dtype=np.float64))
         return PlanningState(
             target_pos=np.asarray(env.target_pos, dtype=np.float64).copy(),
-            obstacles=np.asarray(obstacles, dtype=np.float64).copy(),
             previous_motion=getattr(env, "previous_motion_name", None),
         )
 
@@ -178,13 +162,8 @@ class DiscreteTreeSearchController:
         dx, dy, dtheta = np.asarray(movement, dtype=np.float64)
         target = self._transform_points(state.target_pos.reshape(1, 2), dtheta, dx, dy)[0]
 
-        obstacles = state.obstacles.copy()
-        if obstacles.size:
-            obstacles[:, :2] = self._transform_points(obstacles[:, :2], dtheta, dx, dy)
-
         return PlanningState(
             target_pos=target,
-            obstacles=obstacles,
             previous_motion=self._next_previous_motion(env, action, state.previous_motion),
         )
 
@@ -229,29 +208,6 @@ class DiscreteTreeSearchController:
         abs_angle = abs(angle)
         return min(abs_angle, abs(np.pi - abs_angle))
 
-    @staticmethod
-    def _collision_and_repulse(env, state):
-        if state.obstacles.size == 0:
-            return False, 0.0
-
-        robot_radius = float(getattr(env, "robot_radius", 0.0))
-        obstacle_clearance = float(getattr(env, "obstacle_clearance", 0.0))
-        centers = state.obstacles[:, :2]
-        radii = state.obstacles[:, 2] + robot_radius
-        dists = np.linalg.norm(centers, axis=1)
-        clearances = dists - radii
-
-        collision = bool(np.any(clearances <= 0.0))
-        safe_clearance = max(obstacle_clearance, 1e-6)
-        close_mask = clearances < safe_clearance
-        if not np.any(close_mask):
-            return collision, 0.0
-
-        closeness = 1.0 - np.clip(clearances[close_mask] / safe_clearance, 0.0, 1.0)
-        repulse = float(np.sum(closeness**2))
-        return collision, repulse
-
-
 def evaluate_controller(env_cls, args):
     controller = DiscreteTreeSearchController(
         horizon=args.horizon,
@@ -260,7 +216,6 @@ def evaluate_controller(env_cls, args):
     )
 
     successes = 0
-    collisions = 0
     returns = []
     steps = []
     wall_times = []
@@ -273,7 +228,6 @@ def evaluate_controller(env_cls, args):
         np.random.seed(args.seed + episode)
         obs, _ = env.reset(seed=args.seed + episode)
         done = False
-        info = {}
         episode_return = 0.0
         episode_actions = []
 
@@ -283,7 +237,7 @@ def evaluate_controller(env_cls, args):
                 break
 
             for action in plan.sequence:
-                obs, reward, terminated, truncated, info = env.step(action)
+                obs, reward, terminated, truncated, _ = env.step(action)
                 episode_return += float(reward)
                 episode_actions.append(action)
                 done = terminated or truncated
@@ -291,10 +245,8 @@ def evaluate_controller(env_cls, args):
                     break
 
         distance = float(np.linalg.norm(env.target_pos))
-        success = distance <= env.success_radius and not info.get("collision", False)
-        collision = bool(info.get("collision", False))
+        success = distance <= env.success_radius
         successes += int(success)
-        collisions += int(collision)
         returns.append(episode_return)
         steps.append(env.step_count)
         wall_times.append(time.perf_counter() - episode_start_time)
@@ -308,7 +260,7 @@ def evaluate_controller(env_cls, args):
             running_avg_steps = float(np.mean(steps))
             print(
                 f"episode={episode + 1}/{args.episodes} "
-                f"success={int(success)} collision={int(collision)} "
+                f"success={int(success)} "
                 f"steps={env.step_count} reward={episode_return:.3f} "
                 f"avg_steps={running_avg_steps:.2f} avg_reward={running_avg_reward:.3f}"
             )
@@ -316,7 +268,7 @@ def evaluate_controller(env_cls, args):
         if args.verbose:
             names = [ACTION_NAMES.get(action, str(action)) for action in episode_actions]
             print(
-                f"episode={episode + 1} success={success} collision={collision} "
+                f"episode={episode + 1} success={success} "
                 f"steps={env.step_count} return={episode_return:.3f} "
                 f"final_distance={distance:.3f} actions={names}"
             )
@@ -328,7 +280,6 @@ def evaluate_controller(env_cls, args):
     return {
         "episodes": args.episodes,
         "success_rate": successes / n,
-        "collision_rate": collisions / n,
         "avg_reward": float(np.mean(returns)) if returns else 0.0,
         "std_reward": float(np.std(returns)) if returns else 0.0,
         "avg_steps": float(np.mean(steps)) if steps else 0.0,
@@ -341,7 +292,7 @@ def evaluate_controller(env_cls, args):
 
 def parse_args():
     parser = argparse.ArgumentParser(description="Baseline de busqueda en arbol para SpiderEnv.")
-    parser.add_argument("--env", choices=list(ENV_VARIANTS), default="sin_obstaculos")
+    parser.add_argument("--env", choices=list(ENV_VARIANTS), default="standard")
     parser.add_argument("--episodes", type=int, default=50)
     parser.add_argument("--max-steps", type=int, default=200)
     parser.add_argument("--seed", type=int, default=0)
@@ -395,7 +346,6 @@ def main():
     print(f"avg_wall_time_sec={metrics['avg_wall_time_sec']:.4f} +- {metrics['std_wall_time_sec']:.4f}")
     print(f"avg_reward={metrics['avg_reward']:.4f} +- {metrics['std_reward']:.4f}")
     print(f"success_rate={metrics['success_rate']:.4f}")
-    print(f"collision_rate={metrics['collision_rate']:.4f}")
 
 
 if __name__ == "__main__":

@@ -17,8 +17,8 @@ def parse_args():
     parser.add_argument(
         "--env",
         choices=list(ENV_VARIANTS),
-        default="sin_obstaculos",
-        help="elige el entorno: sin_obstaculos, obstaculos_sin_lidar o obstaculos_lidar",
+        default="standard",
+        help="entorno base de navegación",
     )
     parser.add_argument("-n", "--total-timesteps", type=int, default=500_000)
     parser.add_argument("--n-envs", type=int, default=4)

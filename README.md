@@ -12,7 +12,7 @@ El repositorio contiene el código, los modelos de referencia y el protocolo par
 
 ## Componentes
 
-- Entornos 2D en coordenadas relativas, con y sin obstáculos.
+- Un entorno 2D compacto en coordenadas relativas.
 - Un espacio de 12 acciones asociado directamente a comandos del robot.
 - Una dinámica extendida `M(a[t-1], a[t])` que considera el movimiento anterior.
 - Entrenamiento PPO mediante Stable-Baselines3.
@@ -46,7 +46,7 @@ python -m pip install -e '.[render]'
 python scripts/smoke_test.py
 ```
 
-La salida esperada muestra `OK` para los tres entornos estándar.
+La salida esperada muestra `OK` para el entorno estándar.
 
 ## Uso
 
@@ -54,7 +54,7 @@ La salida esperada muestra `OK` para los tres entornos estándar.
 
 ```bash
 spider-baseline \
-  --env sin_obstaculos \
+  --env standard \
   --episodes 10 \
   --max-steps 200 \
   --seed 0 \
@@ -66,7 +66,7 @@ spider-baseline \
 
 ```bash
 spider-train \
-  --env sin_obstaculos \
+  --env standard \
   --total-timesteps 10000 \
   --n-envs 1 \
   --seed 0 \
@@ -104,12 +104,10 @@ Este comando genera un CSV y gráficos localmente. No hay resultados precalculad
 
 | Variante | Observación | Propósito |
 |---|---:|---|
-| `sin_obstaculos` | `(x, y)` | Experimento base |
-| `obstaculos_sin_lidar` | target + posición/máscara de obstáculos | Obstáculos observables |
-| `obstaculos_lidar` | `(x, y)` + 16 rayos | LiDAR simulado |
+| `standard` | `(x, y)` | Navegación base hacia un objetivo |
 | acción anterior | `(x, y)` + one-hot de 12 acciones | Dinámica condicionada |
 
-Todos usan metros y la API de Gymnasium. `reset(seed=N)` controla el target, los obstáculos y el ruido de movimiento.
+Ambos usan metros y la API de Gymnasium. `reset(seed=N)` controla el target y el ruido de movimiento.
 
 ## Modelos de referencia
 

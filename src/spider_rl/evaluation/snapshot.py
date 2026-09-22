@@ -19,8 +19,8 @@ def parse_args():
     )
     parser.add_argument(
         "--env",
-        choices=["sin_obstaculos", "obstaculos_sin_lidar", "obstaculos_lidar"],
-        default="sin_obstaculos",
+        choices=["standard"],
+        default="standard",
         help="sólo para --env-mode standard",
     )
     parser.add_argument("--target-x", type=float, default=None)
@@ -93,18 +93,6 @@ def plot_snapshot(env, output_path):
             label="Radio de exito",
         )
     )
-
-    obstacles = np.asarray(getattr(env, "obstacles", np.zeros((0, 3))), dtype=np.float64)
-    for idx, (ox, oy, radius) in enumerate(obstacles):
-        ax.add_patch(
-            Circle(
-                (ox, oy),
-                radius,
-                color="#d95f02",
-                alpha=0.35,
-                label="Obstaculo" if idx == 0 else None,
-            )
-        )
 
     ax.scatter([0.0], [0.0], s=150, color="#1f77b4", edgecolor="black", zorder=4, label="Robot")
     ax.scatter([target[0]], [target[1]], s=150, color="#d62728", marker="*", zorder=5, label="Target")

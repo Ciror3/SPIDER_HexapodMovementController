@@ -1,11 +1,7 @@
-from .obstacles_lidar import SpiderEnv as SpiderEnvObstaculosLidar
-from .obstacles_observable import SpiderEnv as SpiderEnvObstaculosSinLidar
-from .standard import SpiderEnv as SpiderEnvSinObstaculos
+from .standard import SpiderEnv
 
 ENV_VARIANTS = {
-    "sin_obstaculos": SpiderEnvSinObstaculos,
-    "obstaculos_sin_lidar": SpiderEnvObstaculosSinLidar,
-    "obstaculos_lidar": SpiderEnvObstaculosLidar,
+    "standard": SpiderEnv,
 }
 
 
@@ -16,8 +12,5 @@ def get_env_class(name: str):
         raise ValueError(f"Entorno '{name}' desconocido. Opciones: {valid}")
     return ENV_VARIANTS[key]
 
-
-# Export por defecto para mantener compatibilidad con imports existentes.
-SpiderEnv = SpiderEnvSinObstaculos
 
 __all__ = ["SpiderEnv", "get_env_class", "ENV_VARIANTS"]

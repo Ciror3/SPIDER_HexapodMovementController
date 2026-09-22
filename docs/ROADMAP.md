@@ -26,8 +26,6 @@ Esta hoja de ruta separa deuda de reproducibilidad de nuevas preguntas de invest
 
 ## 4. Navegación más compleja
 
-- Validar físicamente las variantes con obstáculos.
-- Integrar percepción compatible con hardware y estudiar fallos del LiDAR simulado.
 - Evaluar múltiples objetivos, restricciones de seguridad y escenarios multi-robot.
 - Comparar con baselines clásicos adicionales y una implementación DWA canónica.
 

@@ -128,7 +128,7 @@ En la Ec.~\ref{eq:reward}, $d_t$ representa la distancia actual al objetivo y $\
 \subsection{Baseline de Planificación Discreta}
 Para contextualizar el desempeño de PPO se implementó un controlador no aprendido basado en búsqueda en árbol sobre el mismo espacio de acciones. Este baseline se utiliza como una referencia de planificación local, en línea con la motivación de enfoques clásicos como \textit{Dynamic Window Approach} (DWA) para navegación reactiva \cite{dwa}. El controlador utilizado en esta versión opera como un planificador local discreto: expande secuencias candidatas de comandos, simula sus efectos con el modelo del entorno y selecciona la secuencia con mayor recompensa acumulada.
 
-El planificador mantiene un estado interno compuesto por la posición relativa del objetivo y, cuando corresponde, la posición relativa de obstáculos. A partir de ese estado, simula cada acción aplicando la misma transformación geométrica usada por el entorno:
+El planificador mantiene un estado interno compuesto por la posición relativa del objetivo. A partir de ese estado, simula cada acción aplicando la misma transformación geométrica usada por el entorno:
 
 \begin{equation}
     p_{t+1} = R(-\Delta\theta_t)(p_t - [\Delta x_t,\Delta y_t]^T),
@@ -241,7 +241,7 @@ El proyecto \textsc{S.P.I.D.E.R.} demostró de manera consistente la viabilidad 
 
 A lo largo del proceso debimos abordar diversos desafíos, entre ellos la transformación precisa entre la terna global del sistema OptiTrack y la terna local del robot, la calibración de los comandos motores y la validación de la dinámica de rotación y traslación. La incorporación de mediciones fiables mediante OptiTrack, la búsqueda de hiperparámetros con \texttt{RL Zoo}, el modelado condicionado por pasos anteriores y la comparación contra un baseline de planificación discreta resultaron fundamentales para mejorar la estabilidad del entrenamiento y reducir la brecha entre simulación y realidad.
 
-Si bien el sistema funcionó correctamente, el proyecto presenta ciertas limitaciones: el simulador no modela con fidelidad la física real del robot, el entorno carece de obstáculos físicos y no se midió el tiempo asociado a cada acción, lo que genera discrepancias en la temporalidad real del movimiento. Aun así, los resultados muestran que, incluso con un estado extremadamente simplificado y un conjunto reducido de acciones, el agente es capaz de navegar eficazmente hacia un objetivo utilizando únicamente información relativa local.
+Si bien el sistema funcionó correctamente, el proyecto presenta ciertas limitaciones: el simulador no modela con fidelidad la física real del robot y no se midió el tiempo asociado a cada acción, lo que genera discrepancias en la temporalidad real del movimiento. Aun así, los resultados muestran que, incluso con un estado extremadamente simplificado y un conjunto reducido de acciones, el agente es capaz de navegar eficazmente hacia un objetivo utilizando únicamente información relativa local.
 
 En conjunto, \textsc{S.P.I.D.E.R.} cumple sus objetivos y abre múltiples líneas de trabajo, como la incorporación de entornos más complejos, sensores adicionales, políticas multiobjetivo, estrategias más robustas al ruido y la exploración de control multirobot. El proyecto no sólo valida un enfoque, sino que establece una base sólida para futuras investigaciones en navegación autónoma mediante aprendizaje por refuerzo.
 
