@@ -1,0 +1,19 @@
+cff-version: 1.2.0
+message: "Si usás este repositorio, citá el software y el trabajo asociado."
+title: "S.P.I.D.E.R.: control sim-to-real de un robot hexápodo mediante PPO"
+type: software
+version: 0.1.0
+date-released: 2026-09-22
+authors:
+  - family-names: Morales Arce
+    given-names: Lisandro
+  - family-names: Russi
+    given-names: Ciro
+repository-code: "https://github.com/Ciror3/tpFInalRLSpider"
+license: MIT
+keywords:
+  - reinforcement learning
+  - robotics
+  - PPO
+  - ROS 2
+  - sim-to-real

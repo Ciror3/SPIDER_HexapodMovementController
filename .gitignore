@@ -1,12 +1,35 @@
+# Python
 __pycache__/
-*.pyc
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+.venv/
+venv/
 
-logs_spider/
-models_spider/
-policy_maps/
-policy_maps_1/
+# IDE / OS
+.DS_Store
+.idea/
+.vscode/
+*~
 
-# Por si acaso
+# Salidas reproducibles de experimentos
+artifacts/
 *.tfevents.*
+monitor.csv
 
+# Calibraciones locales y datos del laboratorio
+calibration_results*.txt
+calibration_results*.csv
 
+# Build / paper
+build/
+dist/
+*.aux
+*.bbl
+*.blg
+*.log
+*.out
+*.synctex.gz

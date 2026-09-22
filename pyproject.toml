@@ -1,0 +1,67 @@
+[build-system]
+requires = ["setuptools>=69", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "spider-hexapod-rl"
+version = "0.1.0"
+description = "Entornos y políticas PPO para navegación sim-to-real de un robot hexápodo"
+readme = "README.md"
+requires-python = ">=3.10,<3.13"
+license = {file = "LICENSE"}
+authors = [
+  {name = "Lisandro Morales Arce"},
+  {name = "Ciro Russi"},
+]
+keywords = ["reinforcement-learning", "robotics", "ppo", "ros2", "sim-to-real"]
+classifiers = [
+  "Development Status :: 3 - Alpha",
+  "License :: OSI Approved :: MIT License",
+  "Programming Language :: Python :: 3",
+  "Topic :: Scientific/Engineering :: Artificial Intelligence",
+]
+dependencies = [
+  "gymnasium>=1.2,<1.4",
+  "matplotlib>=3.8,<4",
+  "numpy>=1.26,<3",
+  "stable-baselines3[extra]>=2.7,<3",
+]
+
+[project.optional-dependencies]
+render = ["pygame>=2.5,<3"]
+dev = ["pytest>=8,<10", "ruff>=0.9,<1"]
+hyperparameter-search = ["rl-zoo3>=2.7,<3"]
+
+[project.scripts]
+spider-train = "spider_rl.training.standard:main"
+spider-train-previous = "spider_rl.training.previous_action:main"
+spider-train-alignment = "spider_rl.training.alignment:main"
+spider-baseline = "spider_rl.controllers.tree_search:main"
+spider-compare = "spider_rl.evaluation.compare:main"
+spider-compare-interactive = "spider_rl.evaluation.interactive_compare:main"
+spider-policy-map = "spider_rl.evaluation.policy_map:main"
+spider-snapshot = "spider_rl.evaluation.snapshot:main"
+spider-calibration = "spider_rl.calibration:main"
+
+[project.urls]
+Repository = "https://github.com/Ciror3/tpFInalRLSpider"
+Issues = "https://github.com/Ciror3/tpFInalRLSpider/issues"
+
+[tool.setuptools]
+package-dir = {"" = "src"}
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+addopts = "-q"
+testpaths = ["tests"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py310"
+
+[tool.ruff.lint]
+# Empezamos por errores que pueden romper ejecución. El código experimental
+# histórico todavía no sigue una guía de estilo uniforme.
+select = ["E9", "F63", "F7", "F82"]

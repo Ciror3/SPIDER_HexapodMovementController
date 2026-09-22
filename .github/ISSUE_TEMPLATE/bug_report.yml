@@ -1,0 +1,23 @@
+name: Reporte de error
+description: Informá un comportamiento reproducible del simulador o las herramientas.
+title: "[Bug]: "
+labels: [bug]
+body:
+  - type: textarea
+    attributes:
+      label: Descripción
+      description: ¿Qué ocurrió y qué esperabas que ocurriera?
+    validations:
+      required: true
+  - type: textarea
+    attributes:
+      label: Reproducción
+      description: Incluí el comando exacto, la semilla y la variante del entorno.
+    validations:
+      required: true
+  - type: textarea
+    attributes:
+      label: Entorno
+      description: Sistema operativo, Python, dependencias, CPU/GPU y hardware si aplica.
+    validations:
+      required: true
