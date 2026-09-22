@@ -6,6 +6,8 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![Python](https://img.shields.io/badge/Python-3.10%20%7C%203.11-blue.svg)](pyproject.toml)
 
+![SPI](imgs/setup_robotico.png)
+
 S.P.I.D.E.R. estudia navegación local hacia un objetivo mediante 12 comandos discretos de un hexápodo real. La política se entrena con Proximal Policy Optimization (PPO) en entornos Gymnasium construidos a partir de movimientos medidos con OptiTrack y se transfiere al robot mediante ROS 2 y un ESP32.
 
 El repositorio contiene el código, los modelos de referencia y el protocolo para ejecutar nuevos experimentos. Las métricas, gráficos, checkpoints periódicos y demás resultados generados no se versionan: cada ejecución los guarda en `artifacts/`.
