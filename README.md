@@ -150,8 +150,6 @@ La organización sigue responsabilidades técnicas y evita que scripts, modelos 
 - [Hoja de ruta](docs/ROADMAP.md)
 - [Cómo contribuir](CONTRIBUTING.md)
 
-El manuscrito fuente está en [`paper/informe.tex`](paper/informe.tex).
-
 ## Alcance
 
 El simulador modela transformaciones rígidas calibradas, no contactos y articulaciones completos. La reproducción de software no requiere hardware; la recalibración y el despliegue físico sí necesitan el robot, OptiTrack, ROS 2 y el bridge ESP32. Esas fronteras están documentadas explícitamente para no confundir simulación con validación física.
